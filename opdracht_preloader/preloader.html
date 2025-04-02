@@ -1,68 +1,95 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Animated House Preloader</title>
+  <title>Portfolio Tom</title>
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       background: #111;
-      font-family: sans-serif;
       overflow: hidden;
+      height: 100%;
+      font-family: sans-serif;
     }
-
     #preloader {
       position: fixed;
       inset: 0;
       background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       z-index: 999;
     }
-
-    .shape {
+    .shape-container {
       position: absolute;
-      opacity: 0;
     }
-
+    /* Ensure triangle scales from its center */
+    #container-triangle {
+      transform-origin: center;
+    }
+    .shape {
+      position: relative;
+      border-radius: 10px;
+    }
     .triangle {
       width: 0;
       height: 0;
       border-left: 30px solid transparent;
       border-right: 30px solid transparent;
-      border-bottom: 50px solid #9d4edd;
+      border-bottom: 50px solid #B68CB8;
+      border-radius: 0;
     }
-
     .square {
       width: 40px;
       height: 40px;
-      background: #4cc9f0;
     }
-
     .circle {
       width: 40px;
       height: 40px;
-      background: #4361ee;
       border-radius: 50%;
     }
-
     .rectangle {
       width: 10px;
       height: 40px;
-      background: #f72585;
     }
-
+    #square1 { background: #314CB6; }
+    #square2 { background: #6461A0; }
+    #square3 { background: #B68CB8; }
+    #square4 { background: #EFBDEB; }
+    #circle  { background: #314CB6; }
+    #rectangle { background: #EFBDEB; }
+    /* Loading bar styles */
+    #loading-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      z-index: 1000;
+    }
+    #loading-bar {
+      height: 100%;
+      width: 0%;
+      background: gray;
+    }
+    /* Skip text styles */
+    #skip {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      color: gray;
+      font-size: 12px;
+      z-index: 1001;
+      cursor: pointer;
+    }
     #hero {
       display: none;
       height: 100vh;
-      color: white;
       background: #1e1e2f;
+      color: white;
       display: flex;
-      align-items: center;
       justify-content: center;
+      align-items: center;
       font-size: 2rem;
     }
   </style>
@@ -70,64 +97,143 @@
 <body>
 
 <div id="preloader">
-  <div class="shape triangle" id="triangle"></div>
-
-  <div class="shape square" id="square1"></div>
-  <div class="shape square" id="square2"></div>
-  <div class="shape square" id="square3"></div>
-  <div class="shape square" id="square4"></div>
-
-  <div class="shape circle" id="circle"></div>
-  <div class="shape rectangle" id="rectangle"></div>
+  <div class="shape-container" id="container-triangle"><div class="shape triangle" id="triangle"></div></div>
+  <div class="shape-container" id="container-square1"><div class="shape square" id="square1"></div></div>
+  <div class="shape-container" id="container-square2"><div class="shape square" id="square2"></div></div>
+  <div class="shape-container" id="container-square3"><div class="shape square" id="square3"></div></div>
+  <div class="shape-container" id="container-square4"><div class="shape square" id="square4"></div></div>
+  <div class="shape-container" id="container-circle"><div class="shape circle" id="circle"></div></div>
+  <div class="shape-container" id="container-rectangle"><div class="shape rectangle" id="rectangle"></div></div>
 </div>
 
-<div id="hero">
-  🏡 Welcome to my portfolio!
-</div>
+<div id="hero">🏠 Portfolio Loaded</div>
 
-<!-- GSAP -->
+<!-- Loading bar and skip text -->
+<div id="loading-container">
+  <div id="loading-bar"></div>
+</div>
+<div id="skip">SKIP</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
-  window.addEventListener("load", () => {
-    const centerX = window.innerWidth / 2;
-    const centerY = window.innerHeight / 2;
+  const containers = [
+    "#container-triangle", "#container-square1", "#container-square2",
+    "#container-square3", "#container-square4", "#container-circle", "#container-rectangle"
+  ];
 
-    const timeline = gsap.timeline({
-      onComplete: () => {
-        document.getElementById("preloader").style.display = "none";
-        document.getElementById("hero").style.display = "flex";
-      }
-    });
+  let centerX = window.innerWidth / 2;
+  let centerY = window.innerHeight / 2;
 
-    // Set random starting positions
-    gsap.set(".shape", {
-      x: () => gsap.utils.random(-300, 300),
-      y: () => gsap.utils.random(-300, 300),
-      scale: 0.5
-    });
+  // Revised final positions.
+  const finalPositions = {
+    "#container-triangle": { x: centerX - 30,  y: centerY - 120 },
+    "#container-square1": { x: centerX - 45,  y: centerY - 60 },
+    "#container-square2": { x: centerX - 5,   y: centerY - 60 },
+    "#container-square3": { x: centerX - 45,  y: centerY - 20 },
+    "#container-square4": { x: centerX - 5,   y: centerY - 20 },
+    "#container-circle":  { x: centerX + 60,  y: centerY - 40 },
+    // Tree trunk centered under the circle.
+    "#container-rectangle": { x: centerX + 75, y: centerY }
+  };
 
-    // Fade and move shapes in
-    timeline.to(".shape", {
-      opacity: 1,
+  const orbitRadius = 50;
+  const orbitAngles = containers.map((_, i) => i * (360 / containers.length));
+
+  const tl = gsap.timeline({
+    onComplete: () => {
+      document.getElementById("preloader").style.display = "none";
+      document.getElementById("hero").style.display = "flex";
+      document.getElementById("loading-container").style.display = "none";
+      document.getElementById("skip").style.display = "none";
+    }
+  });
+
+  // Update loading bar on timeline progress
+  tl.eventCallback("onUpdate", () => {
+    document.getElementById("loading-bar").style.width = (tl.progress() * 100) + "%";
+  });
+
+  // Skip preloader on click of SKIP text
+  document.getElementById("skip").addEventListener("click", () => {
+    tl.progress(1);
+  });
+
+  // Ensure shapes spawn completely offscreen using a large margin.
+  function getOffscreenPosition() {
+    const margin = 500;
+    const side = Math.floor(Math.random() * 4);
+    switch (side) {
+      case 0: // Top
+        return { x: gsap.utils.random(-margin, window.innerWidth + margin), y: -margin };
+      case 1: // Right
+        return { x: window.innerWidth + margin, y: gsap.utils.random(-margin, window.innerHeight + margin) };
+      case 2: // Bottom
+        return { x: gsap.utils.random(-margin, window.innerWidth + margin), y: window.innerHeight + margin };
+      case 3: // Left
+        return { x: -margin, y: gsap.utils.random(-margin, window.innerHeight + margin) };
+    }
+  }
+
+  // Step 1: Animate shapes from offscreen to center.
+  containers.forEach((selector, i) => {
+    const { x, y } = getOffscreenPosition();
+    const container = document.querySelector(selector);
+    gsap.set(container, { x, y, scale: 7, rotation: 0 });
+    const duration = 1.8;
+
+    tl.to(container, {
+      x: centerX,
+      y: centerY,
       scale: 1,
-      duration: 0.5,
-      stagger: 0.1,
-      ease: "back.out(1.7)"
-    });
+      duration,
+      ease: "power4.out"
+    }, i * 0.08);
+  });
 
-    // Move shapes into house layout
-    timeline.to("#triangle", { x: 0, y: -120, duration: 1, ease: "power4.out" }, "-=0.4");
+  // Step 2: Set each shape's offset for the orbit.
+  containers.forEach((selector, i) => {
+    let angleRad = orbitAngles[i] * Math.PI / 180;
+    let offsetX = orbitRadius * Math.cos(angleRad);
+    let offsetY = orbitRadius * Math.sin(angleRad);
+    gsap.set(selector + " .shape", { x: offsetX, y: offsetY });
+  });
 
-    timeline.to("#square1", { x: -25, y: -60, duration: 1, ease: "power4.out" }, "-=0.9");
-    timeline.to("#square2", { x: 25, y: -60, duration: 1, ease: "power4.out" }, "-=1");
-    timeline.to("#square3", { x: -25, y: -20, duration: 1, ease: "power4.out" }, "-=1");
-    timeline.to("#square4", { x: 25, y: -20, duration: 1, ease: "power4.out" }, "-=1");
+  // Step 3: Orbit for 5 seconds (rotate each container 360° linearly).
+  tl.add("orbitStart");
+  tl.to(containers, {
+    rotation: "+=360",
+    duration: 5,
+    ease: "linear"
+  }, "orbitStart");
 
-    timeline.to("#circle", { x: 60, y: -40, duration: 1, ease: "power4.out" }, "-=1");
-    timeline.to("#rectangle", { x: 60, y: 10, duration: 1, ease: "power4.out" }, "-=1");
+  // Step 4: Lock shapes one by one (0.2s stagger) to their final positions.
+  tl.add("final");
+  containers.forEach((selector, i) => {
+    tl.to(selector, {
+      x: finalPositions[selector].x,
+      y: finalPositions[selector].y,
+      duration: 0.8,
+      ease: "power4.out"
+    }, "final+=" + (i * 0.2));
 
-    // Fade out preloader
-    timeline.to("#preloader", { opacity: 0, duration: 0.6 });
+    tl.to(selector + " .shape", {
+      x: 0,
+      y: 0,
+      duration: 0.8,
+      ease: "power4.out"
+    }, "final+=" + (i * 0.2));
+
+    if (selector === "#container-triangle") {
+      tl.to(selector, { scale: 1.1, duration: 0.8, ease: "power4.out" }, "final+=" + (i * 0.2));
+    }
+  });
+
+  // Fade out preloader.
+  tl.to("#preloader", { opacity: 0, duration: 0.8, delay: 0.3 });
+
+  window.addEventListener("resize", () => {
+    centerX = window.innerWidth / 2;
+    centerY = window.innerHeight / 2;
   });
 </script>
 
