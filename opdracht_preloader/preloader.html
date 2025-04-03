@@ -64,7 +64,7 @@
       left: 0;
       width: 100%;
       height: 5px;
-      background: rgba(255, 255, 255, 0.1);
+      background: #ffffff1a;
       z-index: 1000;
     }
     #loading-bar {
@@ -85,7 +85,6 @@
     #hero {
       display: none;
       height: 100vh;
-      background: #1e1e2f;
       color: white;
       display: flex;
       justify-content: center;
@@ -106,7 +105,7 @@
   <div class="shape-container" id="container-rectangle"><div class="shape rectangle" id="rectangle"></div></div>
 </div>
 
-<div id="hero">🏠 Portfolio Loaded</div>
+<div id="hero">Portfolio Geladen</div>
 
 <!-- Loading bar and skip text -->
 <div id="loading-container">
@@ -124,15 +123,13 @@
   let centerX = window.innerWidth / 2;
   let centerY = window.innerHeight / 2;
 
-  // Revised final positions.
   const finalPositions = {
-    "#container-triangle": { x: centerX - 30,  y: centerY - 120 },
+    "#container-triangle": { x: centerX - 35,  y: centerY - 120 },
     "#container-square1": { x: centerX - 45,  y: centerY - 60 },
     "#container-square2": { x: centerX - 5,   y: centerY - 60 },
     "#container-square3": { x: centerX - 45,  y: centerY - 20 },
     "#container-square4": { x: centerX - 5,   y: centerY - 20 },
     "#container-circle":  { x: centerX + 60,  y: centerY - 40 },
-    // Tree trunk centered under the circle.
     "#container-rectangle": { x: centerX + 75, y: centerY }
   };
 
@@ -160,7 +157,7 @@
 
   // Ensure shapes spawn completely offscreen using a large margin.
   function getOffscreenPosition() {
-    const margin = 500;
+    const margin = 1000;
     const side = Math.floor(Math.random() * 4);
     switch (side) {
       case 0: // Top
@@ -178,8 +175,8 @@
   containers.forEach((selector, i) => {
     const { x, y } = getOffscreenPosition();
     const container = document.querySelector(selector);
-    gsap.set(container, { x, y, scale: 7, rotation: 0 });
-    const duration = 1.8;
+    gsap.set(container, { x, y, scale: 15, rotation: 0 });
+    const duration = 1.5;
 
     tl.to(container, {
       x: centerX,
@@ -201,9 +198,9 @@
   // Step 3: Orbit for 5 seconds (rotate each container 360° linearly).
   tl.add("orbitStart");
   tl.to(containers, {
-    rotation: "+=360",
-    duration: 5,
-    ease: "linear"
+    rotation: "+=1080",
+    duration: 2.5,
+    ease: "sine.inOut"
   }, "orbitStart");
 
   // Step 4: Lock shapes one by one (0.2s stagger) to their final positions.
@@ -224,12 +221,11 @@
     }, "final+=" + (i * 0.2));
 
     if (selector === "#container-triangle") {
-      tl.to(selector, { scale: 1.1, duration: 0.8, ease: "power4.out" }, "final+=" + (i * 0.2));
+      tl.to(selector, { scale: 1.3, duration: 0.8, ease: "power4.out" }, "final+=" + (i * 0.2));
     }
   });
 
-  // Fade out preloader.
-  tl.to("#preloader", { opacity: 0, duration: 0.8, delay: 0.3 });
+  tl.to("#preloader", { opacity: 0, duration: 0.8, delay: 1 });
 
   window.addEventListener("resize", () => {
     centerX = window.innerWidth / 2;
